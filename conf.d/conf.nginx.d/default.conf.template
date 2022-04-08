@@ -1,0 +1,39 @@
+access_log    /var/log/nginx/access.logs main;
+error_log     /var/log/nginx/error.logs;
+
+upstream master_server {
+    # Default round robin algorithm
+    server php-fpm-server-1:9000 max_fails=3 fail_timeout=10s;
+    server php-fpm-server-2:9000 max_fails=3 fail_timeout=10s;
+}
+
+server {
+    listen  80;
+    root /var/www/html/;
+    server_name localhost;
+    # Disable showing nginx version on error page
+    server_tokens off;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+        return 301 https://$host$request_uri:8443;
+    }
+}
+
+server {
+    listen 443 ssl;
+    root /var/www/html/;
+    server_name localhost;
+    server_tokens off;
+
+    ssl_certificate /etc/nginx/cert/cert.pem;
+    ssl_certificate_key /etc/nginx/cert/key.pem;
+    ssl_password_file /etc/nginx/cert/ssl.pass;
+
+    location / {
+        fastcgi_pass master_server;
+        include fastcgi_params;
+        fastcgi_index  index.php;
+        fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+    }
+}

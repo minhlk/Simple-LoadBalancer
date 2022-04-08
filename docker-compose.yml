@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+  load-balancer:
+    image: nginx:stable-alpine
+    container_name: load-balancer-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./conf.d/conf.nginx.d:/etc/nginx/templates
+      - ./conf.d/cert:/etc/nginx/cert
+    environment:
+      - NGINX_PORT=80
+    links:
+      - php-fpm-server-1
+      - php-fpm-server-2
+
+  php-fpm-server-1:
+    image: php:7.4-fpm-alpine
+    container_name: php-fpm-server-1
+    volumes:
+      - ./server1/index.php:/var/www/html/index.php
+  
+  php-fpm-server-2:
+    image: php:7.4-fpm-alpine
+    container_name: php-fpm-server-2
+    volumes:
+      - ./server2/index.php:/var/www/html/index.php

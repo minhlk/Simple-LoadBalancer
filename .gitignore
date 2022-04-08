@@ -1,0 +1,3 @@
+# ignore pem file and password
+*.pem
+*.pass
